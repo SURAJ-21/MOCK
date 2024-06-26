@@ -1,16 +1,15 @@
-@patch.object(tableau_api_lib.TSC, 'TableauAuth')
-@patch.object(tableau_api_lib.TSC, 'Server')
-def test_get_signin_info(self, MockServer, MockAuth):
-    mock_auth = MagicMock()
-    MockAuth.return_value = mock_auth
-    mock_server = MagicMock()
-    MockServer.return_value = mock_server
-    
-    self.instance.get_signin_info()
-    
-    MockAuth.assert_called_once_with(self.userName, self.instance.get_password(), self.siteUrl)
-    MockServer.assert_called_once()
-    
-    # Additional verification: Check the arguments passed to Server
-    actual_server_args, _ = mock_server.call_args
-    self.assertEqual(actual_server_args[0], self.server)
+@patch.object(TSC.Server, 'views')
+@patch.object(TSC.Server, 'get_by_id')
+@patch.object(TSC, 'CSVRequestOptions')
+def test_setOptions(self, MockCSVRequestOptions, MockGetById, MockViews):
+    mock_csv_data = b'test,csv,data\n'
+    mock_view = MagicMock()
+    instance = TSC()
+    mock_view.csv = [mock_csv_data]
+    MockGetById.return_value = mock_view
+    mock_options_instance = MagicMock()
+    MockCSVRequestOptions.return_value = mock_options_instance
+    instance.setOptions("view123")
+    self.assertEqual(MockGetById.call_count, 1)
+    self.assertEqual(MockViews.populate_csv.call_count, 1)
+    self.assertEqual(MockCSVRequestOptions.call_count, 1)
