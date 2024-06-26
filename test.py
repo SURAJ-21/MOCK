@@ -1,21 +1,22 @@
-class TestMyClass(unittest.TestCase):
-    @patch('requests.get')
-    @patch.object(MyClass, 'sign_in_token', return_value='dummy_token')
-    @patch.object(MyClass, 'request_header', return_value={'Authorization': 'Bearer dummy_token'})
-    def test_get_request(self, mock_request_header, mock_sign_in_token, mock_get):
+@patch.object(MyClass, 'get_request')
+    def test_get_all_views(self, mock_get_request):
         instance = MyClass()
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_get.return_value = mock_response
+        mock_response_1 = MagicMock()
+        mock_response_1.json.return_value = {
+            'views': {'view': [{'id': 1}, {'id': 2}]},
+            'pagination': {'totalAvailable': 4}
+        }
+        mock_response_2 = MagicMock()
+        mock_response_2.json.return_value = {
+            'views': {'view': [{'id': 3}, {'id': 4}]},
+            'pagination': {'totalAvailable': 4}
+        }
+        mock_get_request.side_effect = [mock_response_1, mock_response_2]
 
-        page_number = 1
-        response = instance.get_request(page_number)
+        total_views = instance.get_all_views()
 
-        self.assertEqual(response.status_code, 200)
-        mock_sign_in_token.assert_called_once()
-        mock_request_header.assert_called_once_with('dummy_token')
-        mock_get.assert_called_once_with(
-            url=f'{instance.baseUrl}/sites/{instance.siteId}/views?fields=_all_&includeUsageStatistics=True&pageNumber={page_number}&pageSize={instance.getConfig("MAX_PAGE_SIZE")}',
-            headers={'Authorization': 'Bearer dummy_token'},
-            verify=False
-        )
+        self.assertEqual(len(total_views), 4)
+        self.assertEqual(total_views, [{'id': 1}, {'id': 2}, {'id': 3}, {'id': 4}])
+        self.assertEqual(mock_get_request.call_count, 2)
+        mock_get_request.assert_any_call(1)
+        mock_get_request.assert_any_call(2)
