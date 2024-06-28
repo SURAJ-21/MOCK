@@ -1,20 +1,9 @@
-def setUp(self):
-        self.serviceName = MagicMock()
-        self.reportType = 'reportType'
-        self.handler = BaseHandler()
-    
-    @patch('BaseHandler.getEnvConfig')
-    def test_initialize(self, MockGetEnvConfig):
-        mock_env = MagicMock()
-        self.serviceName._env = mock_env
-        mock_wcap_config = MagicMock()
-        MockGetEnvConfig.return_value = mock_wcap_config
-        
-        self.handler.initialize(self.serviceName, self.reportType)
-        
-        self.assertEqual(self.handler.regressionService, self.serviceName)
-        self.assertEqual(self.handler.reportType, self.reportType)
-        self.assertEqual(self.handler.entitlementsService, self.serviceName.getEntitlementsService())
-        self.assertEqual(self.handler._env, mock_env)
-        self.assertEqual(self.handler._wcapConfig, mock_wcap_config)
-        self.assertEqual(MockGetEnvConfig.call_count, 1)
+self.handler.get_query_argument = MagicMock(side_effect=lambda x, y: f"value_of_{x}")
+
+        expectedParams = ['param1', 'param2']
+        self.handler.readParams(expectedParams)
+
+        self.handler.get_query_argument.assert_any_call('param1', '')
+        self.handler.get_query_argument.assert_any_call('param2', '')
+        self.assertEqual(self.handler.param1, 'value_of_param1')
+        self.assertEqual(self.handler.param2, 'value_of_param2')
