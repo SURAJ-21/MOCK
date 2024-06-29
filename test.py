@@ -1,13 +1,8 @@
-def test_get_auth_token(self):
-        # Arrange
-        mock_response = MagicMock()
-        mock_response.json.return_value = {'credentials': {'token': 'expected_token'}}
-        
+class TestTableauSignInHeader(unittest.TestCase):
+    @patch('path.to.your.module.TableauRegressionShell.getConfig', {'signin_header': 'expected_signin_header'})
+    def test_get_signin_header(self, mock_getConfig):
         obj = TableauRegressionShell()  # Replace with the actual class name
         
-        # Act
-        token = obj.get_auth_token(mock_response)
+        signin_header = obj.get_signin_header()
         
-        # Assert
-        mock_response.json.assert_called_once()
-        self.assertEquals(token, 'expected_token')
+        self.assertEqual(signin_header, 'expected_signin_header')
