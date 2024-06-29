@@ -1,9 +1,16 @@
-self.handler.get_query_argument = MagicMock(side_effect=lambda x, y: f"value_of_{x}")
+def setUp(self):
+        self.handler = BaseHandler()
+        self.handler.runSpec = {"baselineDetails": {"viewName": "TestView"}}
+        self.handler.store = MagicMock()
 
-        expectedParams = ['param1', 'param2']
-        self.handler.readParams(expectedParams)
+    @patch('TableauRegressionConfigManager')
+    def test_run(self, MockTableauRegressionConfigManager):
+        mock_taskobj = MagicMock()
+        MockTableauRegressionConfigManager.return_value = mock_taskobj
+        mock_zipped_data = MagicMock()
+        mock_taskobj.download_view.return_value = mock_zipped_data
 
-        self.handler.get_query_argument.assert_any_call('param1', '')
-        self.handler.get_query_argument.assert_any_call('param2', '')
-        self.assertEqual(self.handler.param1, 'value_of_param1')
-        self.assertEqual(self.handler.param2, 'value_of_param2')
+        self.handler.run()
+
+        mock_taskobj.download_view.assert_called_once_with(self.handler.runSpec["baselineDetails"])
+        self.handler.store.persistObject.assert_called_once_with(mock_zipped_data, 'TestView.zip', skipValidation=True)
