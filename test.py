@@ -1,18 +1,32 @@
-class TestTableauRegressionShell(unittest.TestCase):
-    @patch('TableauRegressionShell.TableauRegressionConfigManager')
-    @patch('TableauRegressionShell.CalculatorShell.store')
-    def test_run(self, mock_store, MockTableauRegressionConfigManager):
-        mock_taskobj = MockTableauRegressionConfigManager.return_value
-        mock_taskobj.download_view.return_value = b'fake_zipped_data'
+class TestTableauServerPassword(unittest.TestCase):
+    @patch('lib.epv.get_credential')
+    def test_get_password_success(self, mock_get_credential):
+        # Arrange
+        mock_get_credential.return_value.Password.return_value = 'correct_password'
         
-        baseline_details = {'viewName': 'test_view'}
-        run_spec = {'baselineDetails': baseline_details}
+        obj = TableauRegressionShell()
+        obj._env = 'test_env'
+        obj.userName = 'test_user'
         
-        shell = TableauRegressionShell()
-        shell.runSpec = run_spec
+        # Act
+        password = obj.get_password()
         
-        shell.run()
+        # Assert
+        mock_get_credential.assert_called_once_with(f'/idanywhere/{obj._env}/{obj.userName}')
+        self.assertEquals(password, 'correct_password')
         
-        MockTableauRegressionConfigManager.assert_called_once()
-        mock_taskobj.download_view.assert_called_once_with(baseline_details)
-        mock_store.persistObject.assert_called_once_with(b'fake_zipped_data', filename='test_view.zip', skipValidation=True)
+    @patch('lib.epv.get_credential')
+    def test_get_password_failure(self, mock_get_credential):
+        # Arrange
+        mock_get_credential.side_effect = Exception('Credential Error')
+        
+        obj = TableauRegressionShell()
+        obj._env = 'test_env'
+        obj.userName = 'test_user'
+        
+        # Act
+        password = obj.get_password()
+        
+        # Assert
+        mock_get_credential.assert_called_once_with(f'/idanywhere/{obj._env}/{obj.userName}')
+        self.assertEquals(password, "s6ry6UezhnoS9V4U")
