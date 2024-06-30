@@ -1,28 +1,19 @@
-@patch('path.to.your.module.RegressionServiceHandler.tableauRegressionConfigurer')
-    @patch('path.to.your.module.RegressionServiceHandler.setResponse')
-    def test_downloadBatchAnalysisView(self, mock_setResponse, mock_tableauRegressionConfigurer):
-        mock_view_in_inventory = MagicMock()
-        mock_view_in_inventory._dict_ = {
-            '_sa_instance_state': 'state',
-            'other_key': 'other_value'
-        }
-        mock_tableauRegressionConfigurer.is_view_in_inventory.return_value = mock_view_in_inventory
-        mock_tableauRegressionConfigurer.download_view.return_value = 'zipped_file'
-
-        self.handler.downloadBatchAnalysisView()
-
-        mock_tableauRegressionConfigurer.is_view_in_inventory.assert_called_once_with(self.handler._paramsDict)
-        mock_tableauRegressionConfigurer.download_view.assert_called_once_with({
-            'other_key': 'other_value',
-            'dashboardParams': ['param1', 'param2', 'param3'],
-            'dashboardType': 'BatchAnalysis'
-        })
-        mock_setResponse.assert_called_once_with('zipped_file')
-
-    def test_downloadBatchAnalysisView_invalid_params(self):
+def setUp(self):
+        self.handler = RegressionServiceHandler()
         self.handler._paramsDict = {
-            'dashboardParams': ['param1', 'param2']
+            'env': 'test_env'
         }
-        with self.assertRaises(Exception) as context:
-            self.handler.downloadBatchAnalysisView()
-        self.assertEqual(str(context.exception), "Item in the dashBoardParams has to be of length 3. Received: ['param1', 'param2']")
+        self.handler.request = MagicMock()
+        self.handler.request.path = '/api/downloadTableauBatchAnalysisViewAsCSV'
+
+    @patch('your_module.RegressionServiceHandler.downloadBatchAnalysisView')
+    @patch('your_module.RegressionServiceHandler.readParams')
+    def test_post_downloadBatchAnalysisView(self, mock_readParams, mock_downloadBatchAnalysisView):
+        mock_readParams.return_value = None
+        mock_downloadBatchAnalysisView.return_value = 'expected_result'
+
+        self.handler.post()
+
+        mock_readParams.assert_called_once()
+        mock_downloadBatchAnalysisView.assert_called_once()
+        self.assertEqual(self.handler.env, 'test_env')
