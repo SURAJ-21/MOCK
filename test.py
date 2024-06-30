@@ -1,28 +1,28 @@
-mock_session = MagicMock()
-        mock_openDbTransaction.return_value.__enter__.return_value = mock_session
-        
-        mock_inventory = MagicMock()
-        mock_inventory.actor = 'owner'
-        mock_inventory.workbookName = 'workbook'
-        mock_inventory.viewName = 'view'
-        mock_inventory.baselineTaskId = 'task_id'
-        mock_inventory.baselineParams = 'params'
-        
-        mock_session.query.return_value.all.return_value = [mock_inventory]
+@patch('path.to.your.module.RegressionServiceHandler.tableauRegressionConfigurer')
+    @patch('path.to.your.module.RegressionServiceHandler.setResponse')
+    def test_downloadBatchAnalysisView(self, mock_setResponse, mock_tableauRegressionConfigurer):
+        mock_view_in_inventory = MagicMock()
+        mock_view_in_inventory._dict_ = {
+            '_sa_instance_state': 'state',
+            'other_key': 'other_value'
+        }
+        mock_tableauRegressionConfigurer.is_view_in_inventory.return_value = mock_view_in_inventory
+        mock_tableauRegressionConfigurer.download_view.return_value = 'zipped_file'
 
-        obj = TableauRegressionShell()
-        result = obj.get_regression_config()
+        self.handler.downloadBatchAnalysisView()
 
-        expected_result = [{
-            'owner': 'owner',
-            'workbookName': 'workbook',
-            'viewName': 'view',
-            'baseline TaskId': 'task_id',
-            'params': 'params'
-        }]
-        
-        self.assertEqual(result, expected_result)
+        mock_tableauRegressionConfigurer.is_view_in_inventory.assert_called_once_with(self.handler._paramsDict)
+        mock_tableauRegressionConfigurer.download_view.assert_called_once_with({
+            'other_key': 'other_value',
+            'dashboardParams': ['param1', 'param2', 'param3'],
+            'dashboardType': 'BatchAnalysis'
+        })
+        mock_setResponse.assert_called_once_with('zipped_file')
 
-        mock_openDbTransaction.assert_called_once()
-        mock_session.query.assert_called_once_with(TableauRegressionConfig)
-        mock_session.query.return_value.all.assert_called_once()
+    def test_downloadBatchAnalysisView_invalid_params(self):
+        self.handler._paramsDict = {
+            'dashboardParams': ['param1', 'param2']
+        }
+        with self.assertRaises(Exception) as context:
+            self.handler.downloadBatchAnalysisView()
+        self.assertEqual(str(context.exception), "Item in the dashBoardParams has to be of length 3. Received: ['param1', 'param2']")
