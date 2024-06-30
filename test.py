@@ -1,24 +1,28 @@
-@patch('path.to.your.module.TableauRegressionShell._openDbTransaction')
-    def test_delete_baseline(self, mock_openDbTransaction):
-        mock_session = MagicMock()
+mock_session = MagicMock()
         mock_openDbTransaction.return_value.__enter__.return_value = mock_session
         
-        mock_query_result = MagicMock()
-        mock_session.query.return_value.filter.return_value.one_or_none.return_value = mock_query_result
+        mock_inventory = MagicMock()
+        mock_inventory.actor = 'owner'
+        mock_inventory.workbookName = 'workbook'
+        mock_inventory.viewName = 'view'
+        mock_inventory.baselineTaskId = 'task_id'
+        mock_inventory.baselineParams = 'params'
+        
+        mock_session.query.return_value.all.return_value = [mock_inventory]
 
         obj = TableauRegressionShell()
-        batchId = 'test_batch_id'
-        env = 'test_env'
-        obj.deleteBaseline(batchId, env)
+        result = obj.get_regression_config()
+
+        expected_result = [{
+            'owner': 'owner',
+            'workbookName': 'workbook',
+            'viewName': 'view',
+            'baseline TaskId': 'task_id',
+            'params': 'params'
+        }]
+        
+        self.assertEqual(result, expected_result)
 
         mock_openDbTransaction.assert_called_once()
         mock_session.query.assert_called_once_with(TableauRegressionConfig)
-
-        expected_filters = and_(
-            func.trim(TableauRegressionConfig.baselineTaskId) == batchId.strip(),
-            func.trim(TableauRegressionConfig.env) == env.strip()
-        )
-
-        mock_session.query.return_value.filter.assert_called_once_with(expected_filters)
-        mock_session.query.return_value.filter.return_value.one_or_none.assert_called_once()
-        mock_session.delete.assert_called_once_with(mock_query_result)
+        mock_session.query.return_value.all.assert_called_once()
