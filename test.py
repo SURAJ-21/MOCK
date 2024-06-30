@@ -1,30 +1,50 @@
-@patch('path.to.your.module.TableauRegressionShell.get_auth_token')
-    @patch('path.to.your.module.TableauRegressionShell.get_credentials')
-    @patch('path.to.your.module.TableauRegressionShell.get_signin_header')
-    @patch('path.to.your.module.requests.post')
-    def test_sign_in_token(self, mock_post, mock_get_signin_header, mock_get_credentials, mock_get_auth_token):
+@patch('path.to.your.module.TableauDataExtractor')
+    @patch('path.to.your.module.TableauDashboardInventoryAllDAO')
+    @patch('path.to.your.module.TableauRegressionShell._openDbTransaction')
+    def test_set_inventory(self, mock_openDbTransaction, mock_TableauDashboardInventoryAllDAO, mock_TableauDataExtractor):
         # Arrange
-        mock_response = MagicMock()
-        mock_response.json.return_value = {'credentials': {'token': 'expected_token'}}
-        mock_post.return_value = mock_response
-        mock_get_signin_header.return_value = {'header_key': 'header_value'}
-        mock_get_credentials.return_value = {'username': 'test_user', 'password': 'test_pass'}
-        mock_get_auth_token.return_value = 'expected_token'
+        mock_dataObj = MagicMock()
+        mock_dataObj.get_all_views.return_value = [
+            {
+                'owner': {'name': 'John Doe', 'fullName': 'Johnathan Doe', 'id': 'user-123', 'siteRole': 'Admin'},
+                'workbook': {'id': 'workbook-456', 'name': 'Sales Report'},
+                'id': 'view-789',
+                'name': 'Quarterly Sales',
+                'project': {'id': 'project-101'},
+                'ownerEmail': 'john.doe@example.com'
+            }
+        ]
+        mock_TableauDataExtractor.return_value = mock_dataObj
+        
+        mock_DAO = MagicMock()
+        mock_TableauDashboardInventoryAllDAO.return_value = mock_DAO
+        
+        mock_session = MagicMock()
+        mock_openDbTransaction.return_value.__enter__.return_value = mock_session
         
         obj = TableauRegressionShell()  # Replace with the actual class name
-        obj.baseUrl = 'http://example.com'
         
         # Act
-        token = obj.sign_in_token()
+        obj.set_inventory()
         
         # Assert
-        mock_post.assert_called_once_with(
-            url='http://example.com/auth/signin',
-            headers={'header_key': 'header_value'},
-            verify=False,
-            json={'username': 'test_user', 'password': 'test_pass'}
-        )
-        mock_get_signin_header.assert_called_once()
-        mock_get_credentials.assert_called_once()
-        mock_get_auth_token.assert_called_once_with(mock_response)
-        self.assertEqual(token, 'expected_token')
+        mock_TableauDataExtractor.assert_called_once()
+        mock_dataObj.get_all_views.assert_called_once()
+        
+        mock_TableauDashboardInventoryAllDAO.assert_called_once()
+        mock_DAO.build.assert_called_once_with({
+            'actor': 'John Doe',
+            'ownerName': 'Johnathan Doe',
+            'ownerId': 'user-123',
+            'ownerSiteRole': 'Admin',
+            'workbookId': 'workbook-456',
+            'workbookName': 'Sales Report',
+            'viewId': 'view-789',
+            'viewName': 'Quarterly Sales',
+            'projectId': 'project-101',
+            'ownerEmail': 'john.doe@example.com'
+        })
+        
+        mock_session.add.assert_called_once()
+        mock_openDbTransaction.return_value.__enter__.assert_called_once()
+        mock_openDbTransaction.return_value.__exit__.assert_called_once()
