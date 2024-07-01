@@ -1,32 +1,34 @@
 def setUp(self):
-        self.baselineDetails = MagicMock()
-        self.baselineDetails.workbookName = "Workbook Name"
-        self.baselineDetails.viewName = "View Name"
-        self.instance = YourClass()
+        self.instance = TableauRegressionShell()
+        self.instance._paramsDict = {'dashboardParams': ['param1', 'param2', 'param3']}
+        self.instance.tableauRegressionConfigurer = MagicMock()
+        self.instance.setResponse = MagicMock()
 
-        self.instance.baselineTaskId = "123"
-        self.instance._paramsDict = {"SID": "456"}
-        self.instance.env = "test_env"
-        self.instance.get_current_user = MagicMock(return_value="test_user")
-        self.instance.postBaselineBatch = MagicMock()
-
-        self.patcher = patch('path.to.YourClass.getConfig')
-        self.MockGetConfig = self.patcher.start()
-
-    def tearDown(self):
-        self.patcher.stop()
-
-    def test_setRegression(self):
-        self.MockGetConfig.side_effect = lambda key: f"test_{key}"
+    def test_downloadBatchAnalysisView_success(self):
+        baselineDetails = {'viewName': 'TestView', '_sa_instance_state': 'to_remove'}
+        expected_baselineDetails = {
+            'viewName': 'TestView',
+            'dashboardParams': ['param1', 'param2', 'param3'],
+            'dashboardType': 'BatchAnalysis'
+        }
         
-        result = self.instance.setRegression(self.baselineDetails)
+        self.instance.tableauRegressionConfigurer.is_view_in_inventory.return_value = baselineDetails
+        self.instance.tableauRegressionConfigurer.download_view.return_value = 'zippedFile'
 
-        self.instance.postBaselineBatch.assert_called_once_with({
-            "batchId": "123",
-            "testName": "F_Test__456__Workbook-Name__View-Name",
-            "baselineEnv": "test_env",
-            "owner": "test_user",
-            "teamOwnerAddress": "test_teamOwnerAddress",
-            "escalationOwner": "test_escalationOwner",
-        })
-        self.assertEqual(result, self.instance.postBaselineBatch.return_value)
+        self.instance.downloadBatchAnalysisView()
+
+        self.assertEqual(self.instance.tableauRegressionConfigurer.is_view_in_inventory.call_count, 1)
+        self.assertEqual(self.instance.tableauRegressionConfigurer.download_view.call_count, 1)
+        self.instance.tableauRegressionConfigurer.download_view.assert_called_with(expected_baselineDetails)
+        self.assertEqual(self.instance.setResponse.call_count, 1)
+        self.instance.setResponse.assert_called_with('zippedFile')
+
+    def test_downloadBatchAnalysisView_invalid_params(self):
+        self.instance._paramsDict = {'dashboardParams': ['param1', 'param2']}
+
+        with self.assertRaises(Exception) as context:
+            self.instance.downloadBatchAnalysisView()
+        self.assertEqual(str(context.exception), "Item in the dashBoardParams has to be of length 3. Received: ['param1', 'param2']")
+
+if __name__ == '__main__':
+    unittest.main()
