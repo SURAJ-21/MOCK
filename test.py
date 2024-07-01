@@ -1,25 +1,22 @@
-def setUp(self):
-        self.handler = RegressionServiceHandler()
-        self.handler.readParams = MagicMock()
-        self.handler.request = MagicMock()
-        self.handler.request.path = "/some/path/getInventory"
-        self.handler.getInventory = MagicMock(return_value="inventory_result")
-        self.handler.getRegressionConfig = MagicMock(return_value="regression_config_result")
+import unittest
+from unittest.mock import Mock
+from your_module import TableauHandler
 
-    @patch('your_module.RegressionServiceHandler.getInventory')
-    @patch('your_module.RegressionServiceHandler.getRegressionConfig')
-    def test_get_inventory(self, mock_get_regression_config, mock_get_inventory):
-        self.handler.request.path = "/some/path/getInventory"
+class TestTableauHandler(unittest.TestCase):
+    def setUp(self):
+        self.handler = TableauHandler()
+        self.handler.request = Mock()
+        self.handler.request.path = "/path/to/getInventory"
+        self.handler.getInventory = Mock(return_value="inventory_result")
+        self.handler.getRegressionConfig = Mock(return_value="regression_config_result")
+    
+    def test_get_inventory(self):
         result = self.handler.get()
-        mock_get_inventory.assert_called_once()
-        mock_get_regression_config.assert_not_called()
         self.assertEqual(result, "inventory_result")
-
-    @patch('your_module.RegressionServiceHandler.getInventory')
-    @patch('your_module.RegressionServiceHandler.getRegressionConfig')
-    def test_get_regression_config(self, mock_get_regression_config, mock_get_inventory):
-        self.handler.request.path = "/some/path/getRegressionConfig"
+        self.assertEqual(self.handler.getInventory.call_count, 1)
+    
+    def test_get_regression_config(self):
+        self.handler.request.path = "/path/to/getRegressionConfig"
         result = self.handler.get()
-        mock_get_inventory.assert_not_called()
-        mock_get_regression_config.assert_called_once()
         self.assertEqual(result, "regression_config_result")
+        self.assertEqual(self.handler.getRegressionConfig.call_count, 1)
