@@ -1,22 +1,7 @@
-import unittest
-from unittest.mock import Mock
-from your_module import TableauHandler
+Limited Functionality: The current Tableau regression functionality is restricted to a few dashboards and lacks test coverage, preventing scalability to user dashboards.
+User Dependency: Users cannot configure or run regressions independently, relying on the tech team for changes and updates.
+Automation Need: There's no record of Tableau dashboards configured for regression testing, necessitating automation and data destruction for obsolete dashboards.
 
-class TestTableauHandler(unittest.TestCase):
-    def setUp(self):
-        self.handler = TableauHandler()
-        self.handler.request = Mock()
-        self.handler.request.path = "/path/to/getInventory"
-        self.handler.getInventory = Mock(return_value="inventory_result")
-        self.handler.getRegressionConfig = Mock(return_value="regression_config_result")
-    
-    def test_get_inventory(self):
-        result = self.handler.get()
-        self.assertEqual(result, "inventory_result")
-        self.assertEqual(self.handler.getInventory.call_count, 1)
-    
-    def test_get_regression_config(self):
-        self.handler.request.path = "/path/to/getRegressionConfig"
-        result = self.handler.get()
-        self.assertEqual(result, "regression_config_result")
-        self.assertEqual(self.handler.getRegressionConfig.call_count, 1)
+Tableau Usage: WCAP team uses Tableau for visualizing and analyzing loan loss forecast results.
+Modifications: Developers must ensure that changes in parameters, such as adding columns or changing formulas, do not affect other results.
+Regression Testing: Implement regression testing to ensure reliability, allowing users to view, configure, and run regression tests for all dashboards.
