@@ -1,3 +1,3 @@
-Inventory Management: Designed an inventory system for all Tableau dashboards, updating nightly to track new, deleted, or updated dashboards, including a separate inventory for regression-ready dashboards.
-Automated Regression: Implemented a nightly job to run regressions on all configured dashboards, using Swagger to expose endpoints for user interaction, enabling them to view, baseline, and delete existing configurations.
-Enhanced User Access: Provided users with downloadable CSV formats of Tableau dashboard views, stored as Parquet files on S3, allowing them to download, store, configure baselines, and run regressions for all types of dashboards.
+Inventory System: Nightly updated inventory for tracking all Tableau dashboards, including regression-ready ones.
+Automated Regression: Nightly regression runs with user endpoints via Swagger for viewing, baselining, and deleting configurations.
+User Access: Downloadable CSVs of Tableau views from S3 for baseline configuration and regression runs on all dashboards.
